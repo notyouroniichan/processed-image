@@ -15,7 +15,7 @@ from celery import Celery
 app = Flask(__name__)
 
 # MongoDB connection URI
-uri = "mongodb+srv://assignment:assignment@assignment.unxgk.mongodb.net/?retryWrites=true&w=majority&appName=assignment"
+uri = <enter_your_mongo_uri_here>
 
 # MongoEngine configuration
 app.config['MONGODB_SETTINGS'] = {
