@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Processing App</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Image Processing App</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="csvFile">Upload CSV File</label>
+                <input type="file" class="form-control-file" id="csvFile" name="csv_file">
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+
+        <div class="mt-5" id="resultTable" style="display:none;">
+            <h3>Processed Images</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>S.No.</th>
+                        <th>Product Name</th>
+                        <th>Input Image URLs</th>
+                        <th>Output Image URLs</th>
+                    </tr>
+                </thead>
+                <tbody id="resultBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+            const csvFile = document.getElementById('csvFile').files[0];
+            formData.append('csv_file', csvFile);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.request_id) {
+                    checkStatus(data.request_id);
+                } else {
+                    alert('Error uploading file');
+                }
+            });
+        });
+
+        function checkStatus(requestId) {
+            fetch(`/status/${requestId}`)
+                .then(response => response.json())
+                .then(statusData => {
+                    if (statusData.status === 'Completed') {
+                        fetchResults(requestId);
+                    } else {
+                        setTimeout(() => checkStatus(requestId), 2000);
+                    }
+                });
+        }
+
+        function fetchResults(requestId) {
+            fetch(`/fetch/${requestId}`)
+                .then(response => response.json())
+                .then(resultData => {
+                    const resultBody = document.getElementById('resultBody');
+                    resultBody.innerHTML = '';
+                    resultData.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${row.serial_number}</td>
+                            <td>${row.product_name}</td>
+                            <td>${row.image_path}</td>
+                            <td>${row.processed_image_path}</td>
+                        `;
+                        resultBody.appendChild(tr);
+                    });
+                    document.getElementById('resultTable').style.display = 'block';
+                });
+        }
+    </script>
+</body>
+</html>
